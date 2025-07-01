@@ -61,3 +61,17 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+################################################################################
+#Force c# as main language
+# Ignore frontend/static files for language stats
+*.css linguist-vendored
+*.js linguist-vendored
+*.html linguist-vendored
+*.scss linguist-vendored
+*.ts linguist-vendored
+*.eot linguist-vendored
+*.woff linguist-vendored
+*.woff2 linguist-vendored
+*.ttf linguist-vendored
+*.svg linguist-vendored
+
