@@ -3,10 +3,10 @@ using Mango.Web.Utility;
 
 namespace Mango.Web.Services
 {
-    public class TokenProviderService : ITokenProvider
+    public class TokenProvider : ITokenProvider
     {
         IHttpContextAccessor _httpContextAccessor;
-        public TokenProviderService(IHttpContextAccessor contextAccessor)
+        public TokenProvider(IHttpContextAccessor contextAccessor)
         {
             _httpContextAccessor = contextAccessor;
         }
