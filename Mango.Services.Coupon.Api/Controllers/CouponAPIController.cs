@@ -8,6 +8,7 @@ namespace Mango.Services.Coupon.Api.Controllers
 {
     [Route("api/coupon")]
     [ApiController]
+    //[Authorize(Roles = "ADMIN")]
     public class CouponAPIController : ControllerBase
     {
         private readonly AppDbContext _db;

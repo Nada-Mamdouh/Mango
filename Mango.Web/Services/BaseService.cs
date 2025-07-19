@@ -10,11 +10,13 @@ namespace Mango.Web.Services
     public class BaseService : IBaseService
     {
         private readonly IHttpClientFactory _httpClientFactory;
-        public BaseService(IHttpClientFactory httpClientFactory)
+        private readonly ITokenProvider _tokenProvider;
+        public BaseService(IHttpClientFactory httpClientFactory, ITokenProvider tokenProvider)
         {
             _httpClientFactory = httpClientFactory;
+            _tokenProvider = tokenProvider;
         }
-        public async Task<ResponseDTO> SendAsync(RequestDto request)
+        public async Task<ResponseDTO> SendAsync(RequestDto request, bool withTokenEnabled)
         {
             try
             {
@@ -42,6 +44,11 @@ namespace Mango.Web.Services
                     default:
                         message.Method = HttpMethod.Get;
                         break;
+                }
+                if (withTokenEnabled)
+                {
+                    var token = _tokenProvider.GetToken();
+                    message.Headers.Add("Authorization", $"Bearer {token}");
                 }
                 HttpResponseMessage? response = await client.SendAsync(message);
                 switch (response.StatusCode)

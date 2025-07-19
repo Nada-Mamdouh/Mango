@@ -1,10 +1,12 @@
 ﻿using Mango.Web.Models;
 using Mango.Web.Services.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
 namespace Mango.Web.Controllers
 {
+    [Authorize]
     public class CouponController : Controller
     {
         private readonly ICouponService _couponService;
@@ -32,6 +34,7 @@ namespace Mango.Web.Controllers
             return View();
         }
         [HttpPost]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> CouponCreate(CouponDTO model)
         {
             if (ModelState.IsValid)
@@ -60,6 +63,7 @@ namespace Mango.Web.Controllers
             return NotFound();
         }
         [HttpPost]
+        [Authorize(Roles = "ADMIN")]
         public async Task<IActionResult> CouponDelete(CouponDTO CouponDTO)
         {
             var response = await _couponService.DeleteCouponsAsync(CouponDTO.CouponId);
