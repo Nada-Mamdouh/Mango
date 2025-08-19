@@ -10,9 +10,11 @@ namespace Mango.Web.Controllers
     public class AuthController : Controller
     {
         IAuthService _authService;
-        public AuthController(IAuthService authService)
+        private readonly ITokenProvider _tokenProvider;
+        public AuthController(IAuthService authService, ITokenProvider tokenProvider)
         {
             _authService = authService;
+            _tokenProvider = tokenProvider;
         }
         [HttpGet]
         public IActionResult Register()
@@ -63,6 +65,8 @@ namespace Mango.Web.Controllers
             if (responseDto != null && responseDto.IsSuccess)
             {
                 LoginResponseDto loginResponse = JsonConvert.DeserializeObject<LoginResponseDto>(Convert.ToString(responseDto.Result));
+                var token = loginResponse.Token;
+                _tokenProvider.SetToken(token);
                 return RedirectToAction("Index", "Home");
             }
             else

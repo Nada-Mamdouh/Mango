@@ -25,8 +25,5 @@ namespace Mango.Web.Services
             _httpContextAccessor.HttpContext?.Response.Cookies.Delete(SD.TOKENCOOKIE);
         }
 
-
-
-
     }
 }
