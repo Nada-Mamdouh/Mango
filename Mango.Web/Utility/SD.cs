@@ -6,6 +6,7 @@
     public static class SD
     {
         public static string CouponBaseApi { get; set; }
+        public static string ProductBaseApi { get; set; }
         public static string AuthBaseApi { get; set; }
         public const string ADMINROLE = "Admin";
         public const string CUSTOMERROLE = "Customer";

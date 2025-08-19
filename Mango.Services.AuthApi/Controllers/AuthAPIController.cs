@@ -40,6 +40,7 @@ namespace Mango.Services.AuthApi.Controllers
                 return BadRequest(response);
             }
             response.Result = loginResponse;
+            //Persist token in cookie here
             return Ok(response);
         }
         [HttpPost("AssignRole")]
