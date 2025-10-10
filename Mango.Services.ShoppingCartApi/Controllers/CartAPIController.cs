@@ -2,6 +2,7 @@
 using Mango.Services.ShoppingCartApi.Data;
 using Mango.Services.ShoppingCartApi.Models;
 using Mango.Services.ShoppingCartApi.Models.DTOs;
+using Mango.Services.ShoppingCartApi.Service.IService;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +15,69 @@ namespace Mango.Services.ShoppingCartApi.Controllers
         private ResponseDTO _response;
         private IMapper _mapper;
         private readonly AppDbContext _db;
-        public CartAPIController(AppDbContext db,IMapper mapper)
+        private readonly IProductService _productService;
+        private readonly ICouponService _couponService;
+        public CartAPIController(AppDbContext db,IMapper mapper, IProductService productService, ICouponService couponService)
         {
             _db = db;
             _mapper = mapper;
+            _productService = productService;
+            _couponService = couponService;
             _response = new ResponseDTO();
+            
+        }
+        [HttpGet("GetCart/{userId}")]
+        public async Task<ResponseDTO> GetCart(string userId)
+        {
+            try
+            {
+                CartDTO cart = new()
+                {
+                    CartHeader = _mapper.Map<CartHeaderDTO>(_db.CartHeader.Where(c => c.UserId == userId).First())
+                };
+                cart.CartDetails = _mapper.Map<IEnumerable<CartDetailDTO>>(_db.CartDetails.Where(c => c.CartHeaderId == cart.CartHeader.CartHeaderId));
+                var products = await _productService.GetProducts();
+
+                foreach (var item in cart.CartDetails)
+                {
+                    item.Product = products.FirstOrDefault(p => p.ProductId == item.ProductId);
+                    cart.CartHeader.CartTotal += (item.Count * item.Product.Price);
+                }
+
+                //apply coupon if any.......
+                if (!string.IsNullOrEmpty(cart.CartHeader.CouponCode))
+                {
+                    CouponDTO couponDto = await _couponService.GetCoupon(cart.CartHeader.CouponCode); 
+                    if(couponDto != null && cart.CartHeader.CartTotal > couponDto.MinAmount)
+                    {
+                        cart.CartHeader.CartTotal -= couponDto.DiscountAmount;
+                        cart.CartHeader.Discount = couponDto.DiscountAmount;
+                    }
+                }
+                _response.Result = cart;
+            }
+            catch (Exception ex) {
+                _response.IsSuccess = false;
+                _response.Message = ex.Message;
+            }
+            return _response;
+        }
+        [HttpPost("ApplyCoupon")]
+        public async Task<object> ApplyCoupon([FromBody] CartDTO cartDto)
+        {
+            try
+            {
+                var cartFromDb = await _db.CartHeader.FirstOrDefaultAsync(c => c.UserId == cartDto.CartHeader.UserId);
+                cartFromDb.CouponCode = cartDto.CartHeader?.CouponCode;
+                _db.CartHeader.Update(cartFromDb);
+                await _db.SaveChangesAsync();
+                _response.Result = true;
+            }catch(Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.Message = ex.Message;
+            }
+            return _response;
         }
         [HttpPost("CartUpsert")]
         public async Task<ResponseDTO> CartUpsert(CartDTO cartDto)
@@ -61,6 +120,35 @@ namespace Mango.Services.ShoppingCartApi.Controllers
                     }
                 }
                 _response.Result = cartDto;
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.Message = ex.Message;
+            }
+            return _response;
+        }
+        [HttpPost("RemoveCart")]
+        public async Task<ResponseDTO> RemoveCart([FromBody] int cartDetailsId)
+        {
+            try
+            {
+                CartDetails cartDetails = _db.CartDetails.First(
+                    c => c.CartDetailId == cartDetailsId);
+
+                int totalCountOfCartItems = _db.CartDetails.Where(
+                    c => c.CartHeaderId == cartDetails.CartHeaderId).Count();
+                _db.CartDetails.Remove(cartDetails); 
+                if (totalCountOfCartItems == 1)
+                {
+                    var cartHeaderToRemove = await _db.CartHeader.FirstOrDefaultAsync(
+                        c => c.CartHeaderId == cartDetails.CartHeaderId);
+
+                    _db.CartHeader.Remove(cartHeaderToRemove);
+                }
+                await _db.SaveChangesAsync();
+                _response.Result = true;
+
             }
             catch (Exception ex)
             {

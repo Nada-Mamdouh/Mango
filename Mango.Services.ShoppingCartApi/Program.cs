@@ -3,6 +3,8 @@ using AutoMapper;
 using Mango.Services.ShoppingCartApi;
 using Mango.Services.ShoppingCartApi.Data;
 using Mango.Services.ShoppingCartApi.Extensions;
+using Mango.Services.ShoppingCartApi.Service;
+using Mango.Services.ShoppingCartApi.Service.IService;
 using Microsoft.EntityFrameworkCore;
 
 namespace Mango.Services.ProductAPI
@@ -20,6 +22,15 @@ namespace Mango.Services.ProductAPI
             });
             IMapper mapper = MappingConfigs.RegisterMap().CreateMapper();
             builder.Services.AddSingleton(mapper);
+            builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<ICouponService, CouponService>();
+
+            builder.Services.AddHttpClient("Product", u => u.BaseAddress = 
+            new Uri(builder.Configuration["ServiceUrl:ProductAPI"]));
+            builder.Services.AddHttpClient("Coupon", u => u.BaseAddress =
+            new Uri(builder.Configuration["ServiceUrl:CouponAPI"]));
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
